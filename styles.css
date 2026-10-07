@@ -1,0 +1,8 @@
+/* centrar form_login */
+.form_login{
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centra verticalmente */
+    align-items: center;     /* Centra horizontalmente */
+    height: 100vh; 
+}

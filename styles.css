@@ -2,7 +2,8 @@
 .form_login{
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centra verticalmente */
-    align-items: center;     /* Centra horizontalmente */
+    justify-content: center; 
+    align-items: center;     
     height: 100vh; 
+
 }

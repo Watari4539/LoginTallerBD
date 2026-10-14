@@ -38,5 +38,6 @@ require_once dirname(__DIR__) . '/Backend/cargar_formulario.php';
         </div>
     </form>
 </main>
+<?php require __DIR__ . '/_piePagina.php'; ?>
 </body>
 </html>

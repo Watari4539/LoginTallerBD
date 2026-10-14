@@ -42,5 +42,6 @@ $registrado = isset($_GET['estado']) && $_GET['estado'] === 'registrado';
         </div>
     </form>
 </main>
+<?php require __DIR__ . '/_piePagina.php'; ?>
 </body>
 </html>

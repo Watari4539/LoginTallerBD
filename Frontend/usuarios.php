@@ -119,5 +119,6 @@ require_once dirname(__DIR__) . '/Backend/cargar_usuarios.php';
         </section>
     <?php endif; ?>
 </main>
+<?php require __DIR__ . '/_piePagina.php'; ?>
 </body>
 </html>

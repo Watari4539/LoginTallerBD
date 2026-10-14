@@ -12,7 +12,9 @@ function errorLogin(string $mensaje, int $status = 401): void
     echo '<title>Iniciar sesión</title><link rel="stylesheet" href="../styles.css"></head>';
     echo '<body class="auth-page"><main class="card auth-card"><p class="eyebrow">GESTIÓN DE USUARIOS</p>';
     echo "<h1>No se pudo iniciar sesión</h1><p class=\"alert alert-error\" role=\"alert\">{$texto}</p>";
-    echo '<a class="button" href="../Frontend/index.html">Volver al login</a></main></body></html>';
+    echo '<a class="button" href="../Frontend/index.html">Volver al login</a></main>';
+    require dirname(__DIR__) . '/Frontend/_piePagina.php';
+    echo '</body></html>';
     exit;
 }
 

@@ -71,7 +71,9 @@ function exigirAdministrador(): array
         echo '<title>Acceso denegado</title><link rel="stylesheet" href="../styles.css"></head>';
         echo '<body class="auth-page"><main class="card auth-card"><h1>Acceso denegado</h1>';
         echo '<p class="alert alert-error" role="alert">Esta acción requiere permisos de administrador.</p>';
-        echo '<a class="button" href="../Frontend/usuarios.php">Volver a usuarios</a></main></body></html>';
+        echo '<a class="button" href="../Frontend/usuarios.php">Volver a usuarios</a></main>';
+        require dirname(__DIR__) . '/Frontend/_piePagina.php';
+        echo '</body></html>';
         exit;
     }
 

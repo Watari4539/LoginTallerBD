@@ -1,3 +1,6 @@
+    <fieldset>
+        <legend>Datos personales</legend>
+        <div class="form-grid">
         <div class="form-group">
         <label for="nombres">Nombres</label>
         <input id="nombres" name="nombres" maxlength="100" value="<?= escapar($fila['nombres']) ?>" required>
@@ -28,6 +31,12 @@
             <option value="divorciado" <?= $fila['estado_civil'] === 'divorciado' ? 'selected' : '' ?>>Divorciado/a</option>
         </select>
         </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Contacto</legend>
+        <div class="form-grid">
         <div class="form-group">
         <label for="email">Correo</label>
         <input id="email" type="email" name="email" maxlength="254" value="<?= escapar($fila['email']) ?>" required>
@@ -40,6 +49,12 @@
         <label for="direccion">Dirección</label>
         <input id="direccion" name="direccion" maxlength="255" value="<?= escapar($fila['direccion']) ?>" required>
         </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Acceso y contratación</legend>
+        <div class="form-grid">
         <?php if ($administrativo): ?>
         <div class="form-group">
         <label for="rol">Rol</label>
@@ -49,7 +64,7 @@
         </select>
         </div>
         <?php else: ?>
-        <p>El registro público crea cuentas de empleado.</p>
+        <p class="help-text grid-wide">Tu cuenta tendrá acceso de consulta como empleado.</p>
         <?php endif; ?>
         <div class="form-group">
         <label for="fecha_contratacion">Fecha de contratación</label>
@@ -61,9 +76,15 @@
         </div>
         <div class="form-group">
         <label for="password">Contraseña <?= !$editar ? '' : '(deja en blanco para conservarla)' ?></label>
-        <input id="password" type="password" name="password" minlength="10" maxlength="72" autocomplete="new-password" <?= !$editar ? 'required' : '' ?>>
+        <input id="password" aria-describedby="password-ayuda" type="password" name="password" minlength="10" maxlength="72" autocomplete="new-password" <?= !$editar ? 'required' : '' ?>>
+        <p id="password-ayuda" class="help-text">Mínimo 10 caracteres y máximo 72 bytes. Los acentos y símbolos pueden ocupar más de un byte.</p>
         </div>
-        <p>Contraseña: mínimo 10 caracteres y máximo 72 bytes. Los acentos y símbolos pueden ocupar más de un byte.</p>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Datos protegidos</legend>
+        <div class="form-grid">
         <div class="form-group">
         <label for="curp">CURP</label>
         <input id="curp" name="curp" pattern="[A-Za-z0-9]{18}" minlength="18" maxlength="18" value="<?= escapar($fila['curp']) ?>" required>
@@ -76,3 +97,5 @@
         <label for="salario">Salario mensual</label>
         <input id="salario" type="number" name="salario" min="0" max="9999999999.99" step="0.01" value="<?= escapar($fila['salario']) ?>" required>
         </div>
+        </div>
+    </fieldset>

@@ -66,9 +66,12 @@ function exigirAdministrador(): array
     $usuario = exigirSesion();
     if (($usuario['rol'] ?? '') !== 'administrador') {
         http_response_code(403);
-        echo '<!doctype html><html lang="es"><meta charset="utf-8"><title>Acceso denegado</title>';
-        echo '<body><h1>Acceso denegado</h1><p>Esta acción requiere permisos de administrador.</p>';
-        echo '<p><a href="../Frontend/usuarios.php">Volver a usuarios</a></p></body></html>';
+        echo '<!doctype html><html lang="es"><head><meta charset="utf-8">';
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+        echo '<title>Acceso denegado</title><link rel="stylesheet" href="../styles.css"></head>';
+        echo '<body class="auth-page"><main class="card auth-card"><h1>Acceso denegado</h1>';
+        echo '<p class="alert alert-error" role="alert">Esta acción requiere permisos de administrador.</p>';
+        echo '<a class="button" href="../Frontend/usuarios.php">Volver a usuarios</a></main></body></html>';
         exit;
     }
 

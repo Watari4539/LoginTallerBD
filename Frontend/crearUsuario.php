@@ -14,21 +14,33 @@ $registrado = isset($_GET['estado']) && $_GET['estado'] === 'registrado';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registro de usuario</title>
+    <link rel="stylesheet" href="../styles.css">
     <script src="../main.js" defer></script>
 </head>
 <body>
-<main>
+<header class="site-header">
+    <nav class="header-content" aria-label="Navegación principal">
+        <a class="brand" href="index.html">Gestión de usuarios</a>
+        <a href="index.html">Volver al login</a>
+    </nav>
+</header>
+<main class="page page-form">
+    <div class="page-heading">
     <h1>Registro de nuevo usuario</h1>
+        <p class="muted">Completa tus datos para crear una cuenta de empleado.</p>
+    </div>
     <?php if ($registrado): ?>
-        <p role="status">Usuario registrado correctamente. Ya puedes <a href="index.html">iniciar sesión</a>.</p>
+        <p class="alert alert-success" role="status">Usuario registrado correctamente. Ya puedes <a href="index.html">iniciar sesión</a>.</p>
     <?php endif; ?>
     <?php require __DIR__ . '/_erroresFormulario.php'; ?>
-    <form id="form_crear_usuario" action="../Backend/registrar_usuario.php" method="post" data-formulario-usuario>
+    <form id="form_crear_usuario" action="../Backend/registrar_usuario.php" method="post" class="card form-card" data-formulario-usuario>
         <input type="hidden" name="csrf_token" value="<?= escapar(tokenCsrf()) ?>">
         <?php require __DIR__ . '/_camposUsuario.php'; ?>
-        <button type="submit">Registrar usuario</button>
+        <div class="form-actions">
+            <a class="button button-secondary" href="index.html">Volver al login</a>
+            <button type="submit">Crear cuenta</button>
+        </div>
     </form>
-    <p><a href="index.html">Volver al login</a></p>
 </main>
 </body>
 </html>

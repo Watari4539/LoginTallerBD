@@ -7,9 +7,12 @@ function errorLogin(string $mensaje, int $status = 401): void
 {
     http_response_code($status);
     $texto = escapar($mensaje);
-    echo "<!doctype html><html lang=\"es\"><meta charset=\"utf-8\"><title>Iniciar sesión</title>";
-    echo "<body><main><h1>No se pudo iniciar sesión</h1><p>{$texto}</p>";
-    echo '<p><a href="../Frontend/index.html">Volver al login</a></p></main></body></html>';
+    echo '<!doctype html><html lang="es"><head><meta charset="utf-8">';
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+    echo '<title>Iniciar sesión</title><link rel="stylesheet" href="../styles.css"></head>';
+    echo '<body class="auth-page"><main class="card auth-card"><p class="eyebrow">GESTIÓN DE USUARIOS</p>';
+    echo "<h1>No se pudo iniciar sesión</h1><p class=\"alert alert-error\" role=\"alert\">{$texto}</p>";
+    echo '<a class="button" href="../Frontend/index.html">Volver al login</a></main></body></html>';
     exit;
 }
 

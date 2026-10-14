@@ -8,7 +8,7 @@ $etiquetasCampos = [
 ];
 ?>
 <?php if ($erroresCampos): ?>
-    <div role="alert">
+    <div class="alert alert-error" role="alert">
         <p>No se guardaron los cambios. Corrige lo siguiente y vuelve a escribir la contraseña si corresponde:</p>
         <ul>
         <?php foreach ($erroresCampos as $campo => $mensaje): ?>

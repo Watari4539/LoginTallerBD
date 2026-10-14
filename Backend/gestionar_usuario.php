@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/validacion_usuario.php';
 $administrador = exigirAdministrador();
 
 function volverAlFormulario(?int $id, string $error): void
@@ -10,13 +10,13 @@ function volverAlFormulario(?int $id, string $error): void
     if ($id !== null) {
         $url .= '&id=' . $id;
     }
-    header('Location: ' . $url);
+    header('Location: ' . $url, true, 303);
     exit;
 }
 
 function volverAUsuarios(string $estado): void
 {
-    header('Location: ../Frontend/usuarios.php?estado=' . rawurlencode($estado));
+    header('Location: ../Frontend/usuarios.php?estado=' . rawurlencode($estado), true, 303);
     exit;
 }
 
@@ -26,13 +26,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Método no permitido.');
 }
 
-$id = isset($_POST['id']) && is_scalar($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT) : false;
+$id = isset($_POST['id']) && is_scalar($_POST['id']) ? filter_var($_POST['id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : false;
 $id = $id === false ? null : (int) $id;
 $accion = isset($_POST['accion']) && is_string($_POST['accion']) ? $_POST['accion'] : '';
 $token = isset($_POST['csrf_token']) && is_string($_POST['csrf_token']) ? $_POST['csrf_token'] : null;
 if (!csrfValido($token)) {
     http_response_code(403);
     exit('La sesión expiró. Vuelve a cargar la página.');
+}
+if (array_key_exists('id', $_POST) && $id === null) {
+    http_response_code(400);
+    exit('El identificador del usuario no es válido.');
 }
 
 if ($accion === 'eliminar') {
@@ -43,7 +47,7 @@ if ($accion === 'eliminar') {
         $stmt = db()->prepare('DELETE FROM usuarios WHERE id = :id');
         $stmt->execute(['id' => $id]);
         if ($stmt->rowCount() === 0) {
-            volverAUsuarios('');
+            volverAUsuarios('no_encontrado');
         }
         volverAUsuarios('eliminado');
     } catch (Throwable $e) {
@@ -61,61 +65,28 @@ if (($accion === 'crear' && $id !== null) || ($accion === 'actualizar' && $id ==
     volverAlFormulario($id, 'datos');
 }
 
-$requeridos = [
-    'nombres', 'apellidos', 'fecha_nacimiento', 'genero', 'estado_civil', 'email',
-    'telefono', 'direccion', 'rol', 'fecha_contratacion', 'nombre_usuario',
-    'curp', 'cuenta_bancaria', 'salario',
-];
-$datos = [];
-foreach ($requeridos as $campo) {
-    if (!isset($_POST[$campo]) || !is_string($_POST[$campo])) {
-        volverAlFormulario($id, 'datos');
-    }
-    $datos[$campo] = trim($_POST[$campo]);
-}
-$password = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
-
-$nombreValido = preg_match("/\\A[\\p{L}\\p{M} .'-]+\\z/u", $datos['nombres'])
-    && preg_match("/\\A[\\p{L}\\p{M} .'-]+\\z/u", $datos['apellidos']);
-$fechaNacimiento = DateTimeImmutable::createFromFormat('!Y-m-d', $datos['fecha_nacimiento']);
-$fechaContratacion = DateTimeImmutable::createFromFormat('!Y-m-d', $datos['fecha_contratacion']);
-$fechasValidas = $fechaNacimiento !== false && $fechaNacimiento->format('Y-m-d') === $datos['fecha_nacimiento']
-    && $fechaNacimiento->format('Y-m-d') <= date('Y-m-d')
-    && $fechaContratacion !== false && $fechaContratacion->format('Y-m-d') === $datos['fecha_contratacion'];
-$longitudesValidas = longitudTexto($datos['nombres']) <= 100
-    && longitudTexto($datos['apellidos']) <= 120
-    && longitudTexto($datos['direccion']) <= 255
-    && longitudTexto($datos['email']) <= 254;
-$tiposValidos = filter_var($datos['email'], FILTER_VALIDATE_EMAIL)
-    && in_array($datos['genero'], ['M', 'F', 'O'], true)
-    && in_array($datos['estado_civil'], ['soltero', 'casado', 'divorciado'], true)
-    && in_array($datos['rol'], ['administrador', 'empleado'], true)
-    && preg_match('/\\A[0-9]{10}\\z/', $datos['telefono'])
-    && preg_match('/\\A[a-zA-Z0-9_.-]{3,50}\\z/', $datos['nombre_usuario'])
-    && preg_match('/\\A[A-Z0-9]{18}\\z/i', $datos['curp'])
-    && preg_match('/\\A[0-9]{10,18}\\z/', $datos['cuenta_bancaria'])
-    && is_numeric($datos['salario'])
-    && (float) $datos['salario'] >= 0
-    && (float) $datos['salario'] <= 9999999999.99;
-$passwordValido = $accion === 'actualizar'
-    ? ($password === '' || (strlen($password) >= 10 && strlen($password) <= 72))
-    : (strlen($password) >= 10 && strlen($password) <= 72);
-
-if (!$nombreValido || !$fechasValidas || !$longitudesValidas || !$tiposValidos || !$passwordValido) {
+[$datos, $errores] = validarUsuario($_POST, true, $accion === 'actualizar');
+$password = $datos['password'];
+$claveFormulario = 'gestion:' . ($id ?? 'nuevo');
+if ($errores) {
+    recordarFormulario($claveFormulario, $datos, $errores);
     volverAlFormulario($id, 'datos');
 }
-$datos['curp'] = strtoupper($datos['curp']);
 if ($id === (int) $administrador['id'] && $datos['rol'] !== 'administrador') {
+    recordarFormulario($claveFormulario, $datos, ['rol' => 'No puedes quitarte tu propio rol de administrador.']);
     volverAlFormulario($id, 'protegido');
 }
 
-$passwordHash = $password === '' ? null : password_hash($password, PASSWORD_DEFAULT);
-$key = aesKey();
-$ivCurp = random_bytes(16);
-$ivCuenta = random_bytes(16);
-$ivSalario = random_bytes(16);
-
 try {
+    $passwordHash = $password === '' ? null : password_hash($password, PASSWORD_DEFAULT);
+    if ($passwordHash === false) {
+        throw new RuntimeException('No se pudo generar el hash de contraseña.');
+    }
+    $key = aesKey();
+    $ivCurp = random_bytes(16);
+    $ivCuenta = random_bytes(16);
+    $ivSalario = random_bytes(16);
+
     $pdo = db();
     if ($accion === 'crear') {
         $stmt = $pdo->prepare(<<<'SQL'
@@ -188,14 +159,15 @@ try {
 } catch (PDOException $e) {
     error_log('Error al guardar usuario: ' . $e->getMessage());
     if ($e->getCode() === '23000') {
+        recordarFormulario($claveFormulario, $datos, ['general' => 'El correo o nombre de usuario ya está registrado.']);
         volverAlFormulario($id, 'duplicado');
     }
-    http_response_code(500);
-    exit('No se pudo guardar el usuario.');
+    recordarFormulario($claveFormulario, $datos, ['general' => 'No se pudo guardar el usuario. Intenta de nuevo.']);
+    volverAlFormulario($id, 'servidor');
 } catch (Throwable $e) {
     error_log('Error al gestionar usuario: ' . $e->getMessage());
-    http_response_code(500);
-    exit('Ocurrió un error al gestionar el usuario.');
+    recordarFormulario($claveFormulario, $datos, ['general' => 'No se pudo guardar el usuario. Intenta de nuevo.']);
+    volverAlFormulario($id, 'servidor');
 }
 
 volverAUsuarios($accion === 'crear' ? 'creado' : 'actualizado');

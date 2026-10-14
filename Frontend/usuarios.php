@@ -1,48 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/Backend/auth.php';
-$usuario = exigirSesion();
-$esAdmin = $usuario['rol'] === 'administrador';
-$usuarios = [];
-$errorListado = false;
-
-try {
-    $pdo = db();
-    if ($esAdmin) {
-        $key = aesKey();
-        $stmt = $pdo->prepare(<<<'SQL'
-            SELECT id, nombres, apellidos, fecha_nacimiento, genero, estado_civil,
-                   email, telefono, direccion, rol, fecha_contratacion, nombre_usuario,
-                   CAST(AES_DECRYPT(curp_cifrada, :key_curp, curp_iv) AS CHAR) AS curp,
-                   CAST(AES_DECRYPT(cuenta_bancaria_cifrada, :key_cuenta, cuenta_bancaria_iv) AS CHAR) AS cuenta_bancaria,
-                   CAST(AES_DECRYPT(salario_cifrado, :key_salario, salario_iv) AS CHAR) AS salario
-            FROM usuarios
-            ORDER BY id DESC
-            SQL);
-        $stmt->bindValue(':key_curp', $key, PDO::PARAM_LOB);
-        $stmt->bindValue(':key_cuenta', $key, PDO::PARAM_LOB);
-        $stmt->bindValue(':key_salario', $key, PDO::PARAM_LOB);
-        $stmt->execute();
-        $usuarios = $stmt->fetchAll();
-    } else {
-        $stmt = $pdo->query(
-            "SELECT id, nombres, apellidos, email, telefono, fecha_contratacion, nombre_usuario
-             FROM usuarios WHERE rol = 'empleado' ORDER BY apellidos, nombres"
-        );
-        $usuarios = $stmt->fetchAll();
-    }
-} catch (Throwable $e) {
-    error_log('Error al consultar usuarios: ' . $e->getMessage());
-    $errorListado = true;
-}
-
-$mensajes = [
-    'creado' => 'Usuario creado correctamente.',
-    'actualizado' => 'Usuario actualizado correctamente.',
-    'eliminado' => 'Usuario eliminado correctamente.',
-];
-$estado = isset($_GET['estado']) && is_string($_GET['estado']) ? ($_GET['estado']) : '';
+require_once dirname(__DIR__) . '/Backend/cargar_usuarios.php';
 ?>
 <!doctype html>
 <html lang="es">
@@ -81,6 +40,9 @@ $estado = isset($_GET['estado']) && is_string($_GET['estado']) ? ($_GET['estado'
                     <th>Contratación</th><th>CURP</th><th>Cuenta bancaria</th><th>Salario</th><th>Acciones</th>
                 </tr></thead>
                 <tbody>
+                <?php if (!$usuarios && !$errorListado): ?>
+                    <tr><td colspan="<?= $esAdmin ? 15 : 5 ?>">No hay usuarios para mostrar.</td></tr>
+                <?php endif; ?>
                 <?php foreach ($usuarios as $fila): ?>
                     <tr>
                         <td><?= escapar($fila['id']) ?></td>
@@ -103,7 +65,7 @@ $estado = isset($_GET['estado']) && is_string($_GET['estado']) ? ($_GET['estado'
                                 <input type="hidden" name="csrf_token" value="<?= escapar(tokenCsrf()) ?>">
                                 <input type="hidden" name="accion" value="eliminar">
                                 <input type="hidden" name="id" value="<?= escapar($fila['id']) ?>">
-                                <button type="submit">Eliminar</button>
+                                <button type="submit" <?= (int) $fila['id'] === (int) $usuario['id'] ? 'disabled title="No puedes eliminar tu propia cuenta"' : '' ?>>Eliminar</button>
                             </form>
                         </td>
                     </tr>
@@ -117,6 +79,9 @@ $estado = isset($_GET['estado']) && is_string($_GET['estado']) ? ($_GET['estado'
             <table border="1" cellpadding="6">
                 <thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Teléfono</th><th>Contratación</th></tr></thead>
                 <tbody>
+                <?php if (!$usuarios && !$errorListado): ?>
+                    <tr><td colspan="<?= $esAdmin ? 15 : 5 ?>">No hay usuarios para mostrar.</td></tr>
+                <?php endif; ?>
                 <?php foreach ($usuarios as $fila): ?>
                     <tr>
                         <td><?= escapar($fila['nombres'] . ' ' . $fila['apellidos']) ?></td>

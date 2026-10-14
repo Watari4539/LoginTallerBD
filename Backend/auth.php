@@ -99,5 +99,6 @@ function escapar(string|int|float|null $valor): string
 
 function longitudTexto(string $valor): int
 {
-    return function_exists('mb_strlen') ? mb_strlen($valor, 'UTF-8') : strlen($valor);
+    return function_exists('mb_strlen') ? mb_strlen($valor, 'UTF-8')
+        : (preg_match_all('/./us', $valor, $coincidencias) ?: strlen($valor));
 }
